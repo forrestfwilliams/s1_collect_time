@@ -52,6 +52,7 @@ def parse_placemark(placemark: etree.Element) -> Iterable:
 
     data = placemark.find(f'{prefix}ExtendedData')
     mode = data.find(f"{prefix}Data[@name='Mode']").find(f'{prefix}value').text
+    pol = data.find(f"{prefix}Data[@name='Polarisation']").find(f'{prefix}value').text
     orbit_absolute = int(data.find(f"{prefix}Data[@name='OrbitAbsolute']").find(f'{prefix}value').text)
     orbit_relative = int(data.find(f"{prefix}Data[@name='OrbitRelative']").find(f'{prefix}value').text)
 
@@ -60,14 +61,14 @@ def parse_placemark(placemark: etree.Element) -> Iterable:
     y_coords = [float(point.split(',')[1]) for point in footprint.split(' ')]
     footprint = Polygon(LinearRing(zip(x_coords, y_coords)))
 
-    return (begin_date, end_date, mode, orbit_absolute, orbit_relative, footprint)
+    return (begin_date, end_date, mode, orbit_absolute, orbit_relative, footprint, pol)
 
 
 def parse_kml(kml_path: Path) -> gpd.GeoDataFrame:
     placemark_pattern = './/{http://www.opengis.net/kml/2.2}Placemark'
     tree = etree.parse(kml_path).getroot()
     placemarks = [parse_placemark(elem) for elem in tree.findall(placemark_pattern)]
-    columns = ['begin_date', 'end_date', 'mode', 'orbit_absolute', 'orbit_relative', 'geometry']
+    columns = ['begin_date', 'end_date', 'mode', 'orbit_absolute', 'orbit_relative', 'geometry', 'pol']
     gdf = gpd.GeoDataFrame(data=placemarks, columns=columns, geometry='geometry', crs='EPSG:4326')
     return gdf
 
